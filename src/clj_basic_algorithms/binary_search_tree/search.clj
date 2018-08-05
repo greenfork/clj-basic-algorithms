@@ -4,6 +4,16 @@
             [criterium.core :refer [bench]])
   (:import [clj_basic_algorithms.binary_search_tree.core BST]))
 
+;;; This file compares different implementations of a binary search tree and
+;;; different implementations of a searching algorithm according to the time
+;;; it takes to execute them.
+;;;
+;;; First the tree implementation is stated, then different searching
+;;; algorithms follow.
+;;;
+;;; At the very end there's a test suite for searching algorithms and it is
+;;; followed by a commented benchmark.
+
 ;;; `bstl-int` `bstv-int` IMPLEMENTATION
 
 (defn value-int [tree]
@@ -21,7 +31,7 @@
     nil
     (second (second tree))))
 
-;; Composite literate solution
+;; Composite literate searching algorithm
 (defn literate-search-int [tree key]
   (if (= nil tree)
     nil
@@ -31,7 +41,7 @@
         (recur (left-child-int tree) key)
         (recur (right-child-int tree) key)))))
 
-;; Fast complex cryptic solution
+;; Fast complex cryptic searching algorithm
 (defn cryptic-search-int [tree key]
   (if (integer? tree)
     (if (= tree key)
@@ -57,7 +67,7 @@
     nil
     (second (second tree))))
 
-;; Composite literate solution
+;; Composite literate searching algorithm
 (defn literate-search-arr [tree key]
   (if (= nil tree)
     nil
@@ -67,7 +77,7 @@
         (recur (left-child-arr tree) key)
         (recur (right-child-arr tree) key)))))
 
-;; Fast complex cryptic solution
+;; Fast complex cryptic searching algorithm
 (defn cryptic-search-arr [tree key]
   (if (= key (first tree))
     tree
@@ -88,7 +98,7 @@
         (recur (:left tree) key)
         (recur (:right tree) key)))))
 
-;;; Exhaustive testing all flavors of search
+;;; Exhaustive testing of all flavors of search
 
 (deftest search-int
   (doseq [f [(partial cryptic-search-int bstl-int)
@@ -101,10 +111,8 @@
     (is (= (f 8) nil))))
 
 (deftest search-arr
-  (doseq [f [
-             (partial cryptic-search-arr bstl-arr)
-             (partial literate-search-arr bstl-arr)
-             ]]
+  (doseq [f [(partial cryptic-search-arr bstl-arr)
+             (partial literate-search-arr bstl-arr)]]
     (is (= (f 4) bstl-arr))
     (is (= (f 2) '(2 ((1) (3)))))
     (is (= (f 3) '(3)))
@@ -141,8 +149,7 @@
                        ["Cryptic search with bstv-arr"
                         (partial cryptic-search-arr bstv-arr)]
                        ["Literate search with bst-rec"
-                        (partial literate-search-rec bst-rec)]
-                       ]]
+                        (partial literate-search-rec bst-rec)]]]
     (println (str "\n\n" message "\n"))
     (bench (do
              (f 4)
