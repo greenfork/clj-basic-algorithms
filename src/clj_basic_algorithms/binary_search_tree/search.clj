@@ -58,18 +58,14 @@
 (defn value-arr [tree] (first tree))
 
 (defn left-child-arr [tree]
-  (if (= 1 (count tree))
-    nil
-    (first (second tree))))
+    (first (second tree)))
 
 (defn right-child-arr [tree]
-  (if (= 1 (count tree))
-    nil
-    (second (second tree))))
+    (second (second tree)))
 
 ;; Composite literate searching algorithm
 (defn literate-search-arr [tree key]
-  (if (= nil tree)
+  (if (nil? tree)
     nil
     (if (= key (value-arr tree))
       tree
@@ -81,7 +77,7 @@
 (defn cryptic-search-arr [tree key]
   (if (= key (first tree))
     tree
-    (if (= 1 (count tree))
+    (if (nil? tree)
       nil
       (if (> (first tree) key)
         (recur (first (second tree)) key)
