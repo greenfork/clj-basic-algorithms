@@ -57,31 +57,25 @@
 
 (defn value-arr [tree] (first tree))
 
-(defn left-child-arr [tree]
-    (first (second tree)))
+(defn left-child-arr [tree] (second tree))
 
-(defn right-child-arr [tree]
-    (second (second tree)))
+(defn right-child-arr [tree] (last tree))
 
 ;; Composite literate searching algorithm
 (defn literate-search-arr [tree key]
-  (if (nil? tree)
-    nil
-    (if (= key (value-arr tree))
-      tree
-      (if (< key (value-arr tree))
-        (recur (left-child-arr tree) key)
-        (recur (right-child-arr tree) key)))))
+  (cond
+    (nil? tree) nil
+    (= key (value-arr tree)) tree
+    (< key (value-arr tree)) (recur (left-child-arr tree) key)
+    (> key (value-arr tree)) (recur (right-child-arr tree) key)))
 
 ;; Fast complex cryptic searching algorithm
 (defn cryptic-search-arr [tree key]
-  (if (= key (first tree))
-    tree
-    (if (nil? tree)
-      nil
-      (if (> (first tree) key)
-        (recur (first (second tree)) key)
-        (recur (second (second tree)) key)))))
+  (cond
+    (nil? tree) nil
+    (= key (first tree)) tree
+    (< key (first tree)) (recur (second tree) key)
+    (> key (first tree)) (recur (last tree) key)))
 
 ;;; `bst-rec` IMPLEMENTATION
 
@@ -110,10 +104,10 @@
   (doseq [f [(partial cryptic-search-arr bstl-arr)
              (partial literate-search-arr bstl-arr)]]
     (is (= (f 4) bstl-arr))
-    (is (= (f 2) '(2 ((1) (3)))))
-    (is (= (f 3) '(3)))
-    (is (= (f 1) '(1)))
-    (is (= (f 5) '(5)))
+    (is (= (f 2) '(2 (1 nil nil) (3 nil nil))))
+    (is (= (f 3) '(3 nil nil)))
+    (is (= (f 1) '(1 nil nil)))
+    (is (= (f 5) '(5 nil nil)))
     (is (= (f 8) nil))))
 
 (deftest search-rec

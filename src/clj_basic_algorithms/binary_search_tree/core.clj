@@ -6,9 +6,9 @@
 ;;; consist of any nested structures.
 ;;;
 ;;; The tree is structured in a way that the first element represents the
-;;; value at that node and the second element represents the children of that
-;;; node. This keeps the tree structure as a plain data which is very common
-;;; in a functional programming paradigm.
+;;; value at that node, the second element is the left child and the third
+;;; element is the right child. This keeps the tree structure as a plain data
+;;; which is very common in a functional programming paradigm.
 
 ;; bstl-int -- tree implementation with integers as leaf nodes and singly
 ;; linked list as a main data structure
@@ -16,7 +16,7 @@
 
 ;; bstl-arr -- tree implementation with lists with key and nils as leaf nodes
 ;; and singly linked list as a main data structure
-(def bstl-arr '(4 ((2 ((1 nil nil) (3 nil nil))) (5 nil nil))))
+(def bstl-arr '(4 (2 (1 nil nil) (3 nil nil)) (5 nil nil)))
 
 ;; bstv-int -- tree implementation with integers as leaf nodes and vector as a
 ;; main data structure
@@ -24,7 +24,7 @@
 
 ;; bstv-arr -- tree implementation with vectors with key and nils as leaf
 ;; nodes and vector as a main data structure
-(def bstv-arr [4 [[2 [[1 nil nil] [3 nil nil]]] [5 nil nil]]])
+(def bstv-arr [4 [2 [1 nil nil] [3 nil nil]] [5 nil nil]])
 
 ;; bst-rec -- tree implementation using records aka Java classes; it is a
 ;; deviation from the plain list structure
