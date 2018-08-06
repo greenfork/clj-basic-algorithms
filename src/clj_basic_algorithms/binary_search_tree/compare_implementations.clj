@@ -1,4 +1,4 @@
-(ns clj-basic-algorithms.binary-search-tree.search
+(ns clj-basic-algorithms.binary-search-tree.compare-implementations
   (:require [clj-basic-algorithms.binary-search-tree.core :refer :all]
             [clojure.test :refer :all]
             [criterium.core :refer [bench]])
