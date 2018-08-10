@@ -298,7 +298,7 @@
           (map->AVL (:right m))
           (:bf m))))
 
-(defn leftmost  [node] (if (nil? (:left node))  node (recur (:left node))))
+(defn leftmost  [node] (if (nil? (:left  node)) node (recur (:left  node))))
 (defn rightmost [node] (if (nil? (:right node)) node (recur (:right node))))
 
 (defn height [node]
@@ -349,13 +349,12 @@
 ;;;
 ;;; For more about specs see clojure.spec.
 
-(s/def ::avl-type #(= clj_basic_algorithms.AVL_tree.core.AVL (type %)))
-(s/def ::left-is-smaller #(or (nil? (:left %)) (< (:key (:left %)) (:key %))))
+(s/def ::avl-type        #(= clj_basic_algorithms.AVL_tree.core.AVL (type %)))
+(s/def ::left-is-smaller #(or (nil? (:left  %)) (< (:key (:left  %)) (:key %))))
 (s/def ::right-is-bigger #(or (nil? (:right %)) (> (:key (:right %)) (:key %))))
-(s/def ::truly-balanced #(== (:bf %) (balance-factor %)))
+(s/def ::truly-balanced  #(== (:bf %) (balance-factor %)))
 ;; In case of incorrectly working `insert` function this generator will fail
-;; to produce data for input to specs of `insert` and `delete` and
-;; consequently their tests will fail too. In this case the function `verify`
+;; to produce data for input to specs. In this case the function `verify`
 ;; should be used to check the correctness of functions.
 (def gen-avl-tree #(gen/fmap insert-multiple (gen/vector (gen/int))))
 (s/def ::avl-tree (s/with-gen
@@ -366,10 +365,11 @@
                             ::right-is-bigger
                             ::truly-balanced))
                     gen-avl-tree))
-(s/def ::key int?)
-(s/def ::left ::avl-tree)
+
+(s/def ::key   int?)
+(s/def ::left  ::avl-tree)
 (s/def ::right ::avl-tree)
-(s/def ::bf #{-1 0 1})
+(s/def ::bf    #{-1 0 1})
 
 (s/def ::search
   #(let [tree-values (into #{} (AVL->keys (-> % :args :node)))
@@ -411,7 +411,7 @@
 (defn test-it [sym]
   ((comp not #(contains? % :failure) stest/abbrev-result first stest/check) sym))
 
-(t/deftest ^:generative avl-tree
+(t/deftest avl-tree
   (t/testing "insertion"
     (t/is (test-it `insert)))
   (t/testing "deletion"
