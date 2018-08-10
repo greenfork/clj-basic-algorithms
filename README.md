@@ -1,13 +1,25 @@
 # Basic algorithms in Clojure
 
-This is an educational repository aimed to build an extensive understanding of
-basic algorithms by taking the functional approach towards basic algorithms
-and implementing them in Clojure. With love <3.
+This is a collection of data structures and algorithms that are essential and
+not so essential in the modern era. You are free to use any of these without
+any obligations.
+
+Why reinvent the wheel, Clojure is built on some of these structures?! Haha, I
+don't know.
+
+# Available structures and algorithms
+
+- [AVL tree][1] -- self-balancing binary search tree, O(log n) operations, on
+  average faster than Red-Black tree on lookup but slower on modifications.
+- [Binary search tree][2] -- most basic data structure. Also contains
+  benchmarks on different implementations of the tree.
+
+[1]: https://github.com/greenfork/clj-basic-algorithms/blob/master/src/clj_basic_algorithms/AVL_tree
+[2]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/binary_search_tree
 
 # Communication
 
-Please, ask questions and make proposals in Issues. I will be glad to discuss
-interesting topics.
+Feel free to ask questions and propose things in Issues.
 
 # License
 
