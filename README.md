@@ -13,9 +13,13 @@ don't know.
   average faster than Red-Black tree on lookup but slower on modifications.
 - [Binary search tree][2] -- most basic data structure. Also contains
   benchmarks on different implementations of the tree.
+- [Red-Black tree][3] -- self-balancing binary search tree, O(log n)
+  operations, on average faster than AVL tree on modifications but slower on
+  lookup.
 
 [1]: https://github.com/greenfork/clj-basic-algorithms/blob/master/src/clj_basic_algorithms/AVL_tree
 [2]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/binary_search_tree
+[3]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/redblack_tree
 
 # Communication
 
