@@ -7,6 +7,10 @@
 (defrecord RB [key left right color])
 
 ;;; Rotation
+;;;
+;;; Rotations are applied to fix the red violation (a red node can't have red
+;;; children) when the uncle (a sibling of a parent) of the inserted node is
+;;; _black_.
 
 (defn rotate-left [root]
   (let [new-root (:right root)]
@@ -39,8 +43,14 @@
          :black)))
 
 ;;; Color flip
+;;;
+;;; Color flip is applied to fix the red violation (a red node can't have red
+;;; children) when the uncle (a sibling of a parent) of the inserted node is
+;;; _red_.
 
-(defn color-flip [root]
+(defn color-flip
+  "Flip the color of the `root` and its children."
+  [root]
   (let [lchild (:left  root)
         rchild (:right root)]
     (RB. (:key root)
@@ -49,6 +59,13 @@
          :red)))
 
 ;;; Insertion
+;;;
+;;; Insert the node as in a normal binary search tree and apply balancing
+;;; while the recursion is unwinding.
+;;;
+;;; Upon unwinding the recursion there is no data left about its history,
+;;; namely grandchildren which were visited. This is why the function
+;;; `balance` has to consider all the cases.
 
 (defn balance [root]
   (let [lchild (:left root)
@@ -66,7 +83,12 @@
         [(rotate-right-left root) :please-stop]))))
 
 (defn- insert-r
-  "Docs."
+  "Return the found tree with `value` in the `node` and a sentinel value.
+  Sentinel value can be one of the following:
+
+  `:please-check` -- nothing should be done, process as usual;
+  `:please-stop`  -- tree is balanced, stop checking it;
+  `:code-red`     -- there is a red violation, balance the tree."
   [node value]
   (cond
     (nil? (:key node)) [(RB. value
@@ -112,8 +134,9 @@
   "Depth-first search."
   [node value]
   (cond
-    (nil? (:key node))      nil
-    (nil? value)            nil
+    (or (nil? node)
+        (nil? value)
+        (nil? (:key node))) nil
     (== value (:key node))  node
     (<  value (:key node))  (recur (:left node) value)
     (>  value (:key node))  (recur (:right node) value)))
@@ -226,9 +249,11 @@
 (s/def ::constant-black-depth #(every? (fn [path] (== (black-depth %)
                                                       (count-black-nodes path)))
                                        (every-path %)))
+
 (def gen-rb-tree #(gen/fmap insert-multiple (gen/vector (gen/int))))
 
 (s/def ::rb-tree (s/nilable
+                  ;; FIXME: `::rb-type` throws errors unpredictably
                   (s/and #_::rb-type
                          (s/keys :req-un [::key ::left ::right ::color])
                          ::node
@@ -276,6 +301,7 @@
   (t/testing "depth-first search"
     (t/is (test-it `dfs))))
 
+;;; Example
 
 (def rb-tree (RB. 13
                   (RB. 8
@@ -309,16 +335,19 @@
                        :red)
                   :black))
 
-(def small-rb-tree (RB. 13
-                        (RB. 8
-                             (RB. nil nil nil :black)
-                             (RB. nil nil nil :black)
-                             :red)
-                        (RB. 17
-                             (RB. nil nil nil :black)
-                             (RB. nil nil nil :black)
-                             :red)
-                        :black))
+;;; `rb-tree` scheme
+;;;
+;;; N -- nil node, black.
 
-(comment
-  (s/explain ::rb-tree-root (insert-multiple (doto (shuffle (range 15)) println))))
+;;                       13,B
+;;                     /      \
+;;                   /          \
+;;                 /              \
+;;               8,R              17,R
+;;             /     \          /      \
+;;           /        \        /         \
+;;         1,B       11,B    15,B       25,B
+;;        /   \      /  \    /  \     /      \
+;;       N    6,R   N    N  N    N  22,R     27,R
+;;           /   \                 /    \   /    \
+;;          N     N               N      N N      N
