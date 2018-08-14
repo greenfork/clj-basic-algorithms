@@ -67,6 +67,8 @@
 ;;; namely grandchildren which were visited. This is why the function
 ;;; `balance` has to consider all the cases.
 
+(declare create-leaf)
+
 (defn balance [root]
   (let [lchild (:left root)
         rchild (:right root)]
@@ -91,10 +93,7 @@
   `:code-red`     -- there is a red violation, balance the tree."
   [node value]
   (cond
-    (nil? (:key node)) [(RB. value
-                             (RB. nil nil nil :black)
-                             (RB. nil nil nil :black)
-                             :red)
+    (nil? (:key node)) [(RB. value (create-leaf) (create-leaf) :red)
                         :please-check]
     (< value (:key node))
     (let [[inserted flag] (insert-r (:left node) value)
@@ -125,6 +124,156 @@
 (defn insert-multiple
   ([values]      (insert-multiple nil values))
   ([node values] (reduce insert node values)))
+
+;;; Deletion
+
+(declare leaf? red? black? color create-leaf leftmost rightmost)
+
+(defn- balance-code-black [root]
+  (let [del-dir (if (leaf? (:left root)) :left :right)
+        opp-dir (if (= :left del-dir) :right :left)
+        deleted (del-dir root)
+        sibling (opp-dir root)
+        sib-outer-child (opp-dir sibling)
+        sib-inner-child (del-dir sibling)
+        rotate-single (if (= :left del-dir) rotate-left rotate-right)
+        rotate-double (if (= :left del-dir) rotate-right-left rotate-left-right)
+        rotate-sibling (if (= :left del-dir) rotate-right rotate-left)]
+    (cond
+      (every? #(= :black (:color %)) [root sibling sib-outer-child sib-inner-child])
+      [(map->RB {:key (:key root)
+                 del-dir deleted
+                 opp-dir (color sibling :red)
+                 :color :black})
+       :code-black]
+      (and (every? #(= :black (:color %)) [sibling sib-outer-child sib-inner-child])
+           (= :red (:color root)))
+      [(map->RB {:key (:key root)
+                 del-dir deleted
+                 opp-dir (color sibling :red)
+                 :color :black})
+       :please-stop]
+      (and (= :black (:color sibling))
+           (= :red (:color sib-outer-child)))
+      (let [root-color (:color root)
+            rotated (rotate-single root)]
+        [(map->RB {:key (:key rotated)
+                   del-dir (color (del-dir rotated) :black)
+                   opp-dir (color (opp-dir rotated) :black)
+                   :color root-color})
+         :please-stop])
+      (and (= :black (:color sibling) (:color sib-outer-child))
+           (= :red (:color sib-inner-child)))
+      (let [root-color (:color root)
+            rotated (rotate-double root)]
+        [(map->RB {:key (:key rotated)
+                   del-dir (color (del-dir rotated) :black)
+                   opp-dir (color (opp-dir rotated) :black)
+                   :color root-color})
+         :please-stop])
+      (and (= :red (:color sibling) (:color (opp-dir sib-inner-child)))
+           (= :black (:color root) (:color sib-inner-child)))
+      (let [rotated (rotate-double root)]
+        [(map->RB {:key (:key rotated)
+                   del-dir (color (del-dir rotated) :black)
+                   opp-dir (map->RB {:key (:key (opp-dir rotated))
+                                     del-dir (color (del-dir (opp-dir rotated)) :black)
+                                     opp-dir (opp-dir (opp-dir rotated))
+                                     :color :red})
+                   :color :black})
+         :please-stop])
+      (and (= :red (:color sibling) (:color (del-dir sib-inner-child)))
+           (= :black (:color root) (:color sib-inner-child)))
+      (let [rotated (rotate-double
+                     (map->RB {:key (:key root)
+                               del-dir deleted
+                               opp-dir (map->RB {:key (:key sibling)
+                                                 del-dir (rotate-sibling sib-inner-child)
+                                                 opp-dir sib-outer-child
+                                                 :color (:color sibling)})
+                               :color (:color root)}))]
+        [(map->RB {:key (:key rotated)
+                   del-dir (color (del-dir rotated) :black)
+                   opp-dir (map->RB {:key (:key (opp-dir rotated))
+                                     del-dir (color (del-dir (opp-dir rotated)) :black)
+                                     opp-dir (opp-dir (opp-dir rotated))
+                                     :color :red})
+                   :color :black})
+         :please-stop])
+      (and (= :red (:color sibling))
+           (every? #(= :black (:color %)) [root sib-inner-child sib-outer-child]))
+      (let [rotated (rotate-single root)]
+        [(map->RB {:key (:key rotated)
+                   del-dir (map->RB {:key (:key (del-dir rotated))
+                                     del-dir deleted
+                                     opp-dir (color (opp-dir (del-dir rotated)) :red)
+                                     :color :black})
+                   opp-dir (color (opp-dir rotated) :black)
+                   :color :black})
+         :please-continue]))))
+
+(defn- delete-r
+  [node value]
+  (let [lchild (:left node)
+        rchild (:right node)
+        k      (:key node)]
+    (cond
+      (nil? k) [(create-leaf) :please-stop]
+      (== value k)
+      (cond
+        (red? node) [lchild :please-stop] ;; lchild and rchild are equal leaves
+        (and (leaf? lchild) (red?  rchild)) [(color rchild :black) :please-stop]
+        (and (red?  lchild) (leaf? rchild)) [(color lchild :black) :please-stop]
+        (and (leaf? lchild) (leaf? rchild)) [(create-leaf) :code-black]
+        ;; `node` is black and both children are not leaves
+        :else (let [sub (if (zero? (rand-int 2))    ;; value to substitute with
+                          (:key (rightmost lchild)) ;; in-order predecessor
+                          (:key (leftmost rchild))) ;; in-order successor
+                    [deleted flag] (delete-r node sub)
+                    l-deleted (:left deleted)
+                    r-deleted (:right deleted)
+                    ;; Then we can apply the substitution. Here it is necessary
+                    ;; to check whether there was a rotation and initial node
+                    ;; which we want to delete will be substituted correctly.
+                    ;; After the rotation the only 3 places where initial node
+                    ;; could be are: top, left and right nodes.
+                    left-tree (if (= (:key l-deleted) k)
+                                (RB. sub (:left l-deleted) (:right l-deleted)
+                                     (:color l-deleted))
+                                l-deleted)
+                    right-tree (if (= (:key r-deleted) k)
+                                 (RB. sub (:left r-deleted) (:right r-deleted)
+                                      (:color r-deleted))
+                                 r-deleted)
+                    middle-tree (if (= (:key deleted) k)
+                                  (RB. sub left-tree right-tree
+                                       (:color deleted))
+                                  (RB. (:key deleted) left-tree right-tree
+                                       (:color deleted)))]
+                [middle-tree flag]))
+      (<  value k)
+      (let [[deleted flag] (delete-r lchild value)
+            new-tree       (RB. k deleted rchild (:color node))]
+        (cond
+          (= flag :please-stop) [new-tree :please-stop]
+          (= flag :code-black)  (balance-code-black new-tree)
+          :else                 [new-tree :please-continue]))
+      (>  value k)
+      (let [[deleted flag] (delete-r rchild value)
+            new-tree       (RB. k lchild deleted (:color node))]
+        (cond
+          (= flag :please-stop) [new-tree :please-stop]
+          (= flag :code-black)  (balance-code-black new-tree)
+          :else                 [new-tree :please-continue])))))
+
+(defn delete
+  [node value]
+  (if (or (nil? node)
+          (nil? value)
+          (nil? (:key node))
+          (and (leaf? (:left node)) (leaf? (:right node))))
+    (create-leaf)
+    (first (delete-r node value))))
 
 ;;; Searching
 ;;;
@@ -186,7 +335,7 @@
 (defn every-path
   "Return a collection of all possible paths consisting of keys and colors."
   [node]
-  (if (nil? node)
+  (if (or (nil? node) (leaf? node))
     #{'([nil :black])}
     (every-path-r node (list [(:key node) (:color node)]))))
 
@@ -199,6 +348,19 @@
       (nil? node)              acc
       (= :red (:color node))   (recur (:left node) acc)
       (= :black (:color node)) (recur (:left node) (inc acc)))))
+
+(defn red? [node] (= :red (:color node)))
+(defn black? [node] (= :black (:color node)))
+
+(defn color
+  "Color the node with a specified... ahhh, `coloUr`."
+  [node colour]
+  (RB. (:key node) (:left node) (:right node) colour))
+
+(defn create-leaf [] (RB. nil nil nil :black))
+
+(defn leftmost  [node] (if (leaf? (:left  node)) node (recur (:left  node))))
+(defn rightmost [node] (if (leaf? (:right node)) node (recur (:right node))))
 
 ;;; Specs
 ;;;
@@ -246,15 +408,14 @@
                         (or (= :black (:color %))
                             (red-node? %)))))
 
-(s/def ::constant-black-depth #(every? (fn [path] (== (black-depth %)
-                                                      (count-black-nodes path)))
+(s/def ::constant-black-depth #(every? (fn [path] (= (black-depth %)
+                                                     (count-black-nodes path)))
                                        (every-path %)))
 
 (def gen-rb-tree #(gen/fmap insert-multiple (gen/vector (gen/int))))
 
 (s/def ::rb-tree (s/nilable
-                  ;; FIXME: `::rb-type` throws errors unpredictably
-                  (s/and #_::rb-type
+                  (s/and ::rb-type
                          (s/keys :req-un [::key ::left ::right ::color])
                          ::node
                          ::left-is-smaller
@@ -290,14 +451,21 @@
   :ret  ::rb-tree-root
   :fn   #(some? (dfs (:ret %) (-> % :args :value))))
 
+(s/fdef delete
+  :args (s/cat :node ::rb-tree-root :value int?)
+  :ret  ::rb-tree-root
+  :fn   #(nil? (dfs (:ret %) (-> % :args :value))))
+
 ;;; Testing
 
 (defn test-it [sym]
   ((comp not #(contains? % :failure) stest/abbrev-result first stest/check) sym))
 
-(t/deftest rb-tree
+(t/deftest rb-tree-test
   (t/testing "insertion"
     (t/is (test-it `insert)))
+  (t/testing "deletion"
+    (t/is (test-it `delete)))
   (t/testing "depth-first search"
     (t/is (test-it `dfs))))
 
@@ -306,31 +474,16 @@
 (def rb-tree (RB. 13
                   (RB. 8
                        (RB. 1
-                            (RB. nil nil nil :black)
-                            (RB. 6
-                                 (RB. nil nil nil :black)
-                                 (RB. nil nil nil :black)
-                                 :red)
+                            (create-leaf)
+                            (RB. 6 (create-leaf) (create-leaf) :red)
                             :black)
-                       (RB. 11
-                            (RB. nil nil nil :black)
-                            (RB. nil nil nil :black)
-                            :black)
+                       (RB. 11 (create-leaf) (create-leaf) :black)
                        :red)
                   (RB. 17
-                       (RB. 15
-                            (RB. nil nil nil :black)
-                            (RB. nil nil nil :black)
-                            :black)
+                       (RB. 15 (create-leaf) (create-leaf) :black)
                        (RB. 25
-                            (RB. 22
-                                 (RB. nil nil nil :black)
-                                 (RB. nil nil nil :black)
-                                 :red)
-                            (RB. 27
-                                 (RB. nil nil nil :black)
-                                 (RB. nil nil nil :black)
-                                 :red)
+                            (RB. 22 (create-leaf) (create-leaf) :red)
+                            (RB. 27 (create-leaf) (create-leaf) :red)
                             :black)
                        :red)
                   :black))
