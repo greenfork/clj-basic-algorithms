@@ -65,11 +65,13 @@
 ;;;
 ;;; Upon unwinding the recursion there is no data left about its history,
 ;;; namely grandchildren which were visited. This is why the function
-;;; `balance` has to consider all the cases.
+;;; `balance-code-red` has to consider all the cases.
 
 (declare create-leaf)
 
-(defn balance [root]
+(defn balance-code-red
+  "Deal with red violation."
+  [root]
   (let [lchild (:left root)
         rchild (:right root)]
     (if (= :red (:color lchild) (:color rchild))
@@ -102,7 +104,7 @@
       (cond
         (= :please-stop flag) [new-tree :please-stop]
         red-violation?        [new-tree :code-red]
-        (= :code-red flag)    (balance new-tree)
+        (= :code-red flag)    (balance-code-red new-tree)
         :else                 [new-tree :please-check]))
     (> value (:key node))
     (let [[inserted flag] (insert-r (:right node) value)
@@ -111,7 +113,7 @@
       (cond
         (= :please-stop flag) [new-tree :please-stop]
         red-violation?        [new-tree :code-red]
-        (= :code-red flag)    (balance new-tree)
+        (= :code-red flag)    (balance-code-red new-tree)
         :else                 [new-tree :please-check]))
     :else [node :please-stop]))
 
@@ -126,104 +128,128 @@
   ([node values] (reduce insert node values)))
 
 ;;; Deletion
+;;;
+;;; Deletion, unlike insertion, may introduce a harder case of "black
+;;; violation". This violation is balanced with `balance-code-black`.
+;;;
+;;; I don't think there is a chance to successfully refactor this due to
+;;; complexity of the algorithm and constraints because of the immutable data
+;;; structures. This can be rewritten with mutable data structures though, but
+;;; the goal was to complete the Red-Black tree in a functional style.
 
-(declare leaf? red? black? color create-leaf leftmost rightmost)
+(declare leaf? red? color create-leaf leftmost rightmost)
 
-(defn- balance-code-black [root]
-  (let [del-dir (if (leaf? (:left root)) :left :right)
-        opp-dir (if (= :left del-dir) :right :left)
-        deleted (del-dir root)
-        sibling (opp-dir root)
+(defn- balance-code-black
+  "Remove black violation.
+
+  The steps are taken from 'Eternally Confuzzled' blog:
+  http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx. The
+  fifth case moved to the last, 7th, because the order matters here.
+  Everything else is the same.
+
+  If you plan to implement the Red-Black tree, try to choose a concise
+  language like C or Java, where it is possible to mutate variables."
+  [root]
+  (let [del-dir         (if (leaf? (:left root)) :left :right)
+        opp-dir         (if (= :left del-dir) :right :left)
+        deleted         (del-dir root)
+        sibling         (opp-dir root)
         sib-outer-child (opp-dir sibling)
         sib-inner-child (del-dir sibling)
-        rotate-single (if (= :left del-dir) rotate-left rotate-right)
-        rotate-double (if (= :left del-dir) rotate-right-left rotate-left-right)
-        rotate-sibling (if (= :left del-dir) rotate-right rotate-left)]
+        rotate-single   (if (= :left del-dir) rotate-left rotate-right)
+        rotate-double   (if (= :left del-dir) rotate-right-left rotate-left-right)
+        rotate-sibling  (if (= :left del-dir) rotate-right rotate-left)]
     (cond
       (every? #(= :black (:color %)) [root sibling sib-outer-child sib-inner-child])
-      [(map->RB {:key (:key root)
+      [(map->RB {:key    (:key root)
                  del-dir deleted
                  opp-dir (color sibling :red)
-                 :color :black})
+                 :color  :black})
        :code-black]
       (and (every? #(= :black (:color %)) [sibling sib-outer-child sib-inner-child])
            (= :red (:color root)))
-      [(map->RB {:key (:key root)
+      [(map->RB {:key    (:key root)
                  del-dir deleted
                  opp-dir (color sibling :red)
-                 :color :black})
-       :please-stop]
+                 :color  :black})
+       :please-continue]
       (and (= :black (:color sibling))
            (= :red (:color sib-outer-child)))
       (let [root-color (:color root)
             rotated (rotate-single root)]
-        [(map->RB {:key (:key rotated)
+        [(map->RB {:key    (:key rotated)
                    del-dir (color (del-dir rotated) :black)
                    opp-dir (color (opp-dir rotated) :black)
-                   :color root-color})
-         :please-stop])
+                   :color  root-color})
+         :please-continue])
       (and (= :black (:color sibling) (:color sib-outer-child))
            (= :red (:color sib-inner-child)))
       (let [root-color (:color root)
             rotated (rotate-double root)]
-        [(map->RB {:key (:key rotated)
+        [(map->RB {:key    (:key rotated)
                    del-dir (color (del-dir rotated) :black)
                    opp-dir (color (opp-dir rotated) :black)
-                   :color root-color})
-         :please-stop])
+                   :color  root-color})
+         :please-continue])
       (and (= :red (:color sibling) (:color (opp-dir sib-inner-child)))
            (= :black (:color root) (:color sib-inner-child)))
       (let [rotated (rotate-double root)]
-        [(map->RB {:key (:key rotated)
+        [(map->RB {:key    (:key rotated)
                    del-dir (color (del-dir rotated) :black)
-                   opp-dir (map->RB {:key (:key (opp-dir rotated))
+                   opp-dir (map->RB {:key    (:key (opp-dir rotated))
                                      del-dir (color (del-dir (opp-dir rotated)) :black)
                                      opp-dir (opp-dir (opp-dir rotated))
-                                     :color :red})
-                   :color :black})
-         :please-stop])
+                                     :color  :red})
+                   :color  :black})
+         :please-continue])
       (and (= :red (:color sibling) (:color (del-dir sib-inner-child)))
            (= :black (:color root) (:color sib-inner-child)))
       (let [rotated (rotate-double
-                     (map->RB {:key (:key root)
+                     (map->RB {:key    (:key root)
                                del-dir deleted
-                               opp-dir (map->RB {:key (:key sibling)
+                               opp-dir (map->RB {:key    (:key sibling)
                                                  del-dir (rotate-sibling sib-inner-child)
                                                  opp-dir sib-outer-child
-                                                 :color (:color sibling)})
-                               :color (:color root)}))]
-        [(map->RB {:key (:key rotated)
+                                                 :color  (:color sibling)})
+                               :color  (:color root)}))]
+        [(map->RB {:key    (:key rotated)
                    del-dir (color (del-dir rotated) :black)
-                   opp-dir (map->RB {:key (:key (opp-dir rotated))
+                   opp-dir (map->RB {:key    (:key (opp-dir rotated))
                                      del-dir (color (del-dir (opp-dir rotated)) :black)
                                      opp-dir (opp-dir (opp-dir rotated))
-                                     :color :red})
-                   :color :black})
-         :please-stop])
+                                     :color  :red})
+                   :color  :black})
+         :please-continue])
       (and (= :red (:color sibling))
            (every? #(= :black (:color %)) [root sib-inner-child sib-outer-child]))
       (let [rotated (rotate-single root)]
-        [(map->RB {:key (:key rotated)
-                   del-dir (map->RB {:key (:key (del-dir rotated))
+        [(map->RB {:key    (:key rotated)
+                   del-dir (map->RB {:key    (:key (del-dir rotated))
                                      del-dir deleted
                                      opp-dir (color (opp-dir (del-dir rotated)) :red)
-                                     :color :black})
+                                     :color  :black})
                    opp-dir (color (opp-dir rotated) :black)
-                   :color :black})
+                   :color  :black})
          :please-continue]))))
 
 (defn- delete-r
+  "Delete the node in a balanced manner. The output value is a pair.
+  First value is the resulting node and the second value is one of the
+  following:
+
+  1. `:please-continue` -- everything is okay, nothing should be done;
+  2. `:code-red`        -- there is a black violation, remove it."
   [node value]
   (let [lchild (:left node)
         rchild (:right node)
         k      (:key node)]
     (cond
-      (nil? k) [(create-leaf) :please-stop]
+      (nil? k) [(create-leaf) :please-continue]
       (== value k)
       (cond
-        (red? node) [lchild :please-stop] ;; lchild and rchild are equal leaves
-        (and (leaf? lchild) (red?  rchild)) [(color rchild :black) :please-stop]
-        (and (red?  lchild) (leaf? rchild)) [(color lchild :black) :please-stop]
+        (red? node) [lchild :please-continue] ;; lchild and rchild are equal leaves
+        (and (leaf? lchild) (red?  rchild)) [(color rchild :black) :please-continue]
+        (and (red?  lchild) (leaf? rchild)) [(color lchild :black) :please-continue]
         (and (leaf? lchild) (leaf? rchild)) [(create-leaf) :code-black]
         ;; `node` is black and both children are not leaves
         :else (let [sub (if (zero? (rand-int 2))    ;; value to substitute with
@@ -255,14 +281,14 @@
       (let [[deleted flag] (delete-r lchild value)
             new-tree       (RB. k deleted rchild (:color node))]
         (cond
-          (= flag :please-stop) [new-tree :please-stop]
+          (= flag :please-continue) [new-tree :please-continue]
           (= flag :code-black)  (balance-code-black new-tree)
           :else                 [new-tree :please-continue]))
       (>  value k)
       (let [[deleted flag] (delete-r rchild value)
             new-tree       (RB. k lchild deleted (:color node))]
         (cond
-          (= flag :please-stop) [new-tree :please-stop]
+          (= flag :please-continue) [new-tree :please-continue]
           (= flag :code-black)  (balance-code-black new-tree)
           :else                 [new-tree :please-continue])))))
 
@@ -350,7 +376,6 @@
       (= :black (:color node)) (recur (:left node) (inc acc)))))
 
 (defn red? [node] (= :red (:color node)))
-(defn black? [node] (= :black (:color node)))
 
 (defn color
   "Color the node with a specified... ahhh, `coloUr`."
