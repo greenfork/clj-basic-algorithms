@@ -92,6 +92,7 @@
   "Straight from the `clojure.lang` namespace."
   [x]
   (condp = (type x)
-    java.lang.Long    (Murmur3/hashLong x)
-    java.lang.Integer (Murmur3/hashInt x)
-    java.lang.String  (Murmur3/hashUnencodedChars x)))
+    java.lang.Long       (Murmur3/hashLong x)
+    java.lang.Integer    (Murmur3/hashInt x)
+    java.lang.String     (Murmur3/hashUnencodedChars x)
+    clojure.lang.Keyword (+ (Murmur3/hashUnencodedChars (str x)) 0x9e3779b9)))
