@@ -1,6 +1,8 @@
 (ns clj-basic-algorithms.index-hashing.core
   (:import [clojure.lang Murmur3]))
 
+;;; Simulation of a "signed int" behavior with 32 bits.
+
 (defn ->int32 [x] (int (cond
                          (> x Integer/MAX_VALUE)
                          (+ Integer/MIN_VALUE (mod x (inc Integer/MAX_VALUE)))
@@ -15,6 +17,8 @@
 (defn rand32 [] (->int32 (long (rand (* 2 Integer/MAX_VALUE)))))
 
 ;;; "Bad" hashing algorithms
+;;;
+;;; The most primitive ones, should not be used as a general solution.
 
 (defn additive-hash [s]
   (reduce #(u32+ %1 (int %2)) 0 (str s)))
@@ -26,6 +30,9 @@
   (reduce #(xor32 (xor32 (<<32 %1 4) (>>32 %1 28)) (int %2)) 0 (str s)))
 
 ;;; "Good" hashing algorithms
+;;;
+;;; Every hashing function should be tested before going to production on the
+;;; set of production values it is going to be used with.
 
 (defn bernstein
   "Confusingly good, works best for small `s`."
