@@ -5,7 +5,7 @@
 
   Please, do not use this in production. Use Clojure maps instead like so:
   `{:a 1 :b 2 :c 3}`."
-  (:import [clojure.lang Murmur3 PersistentList]))
+  (:import [clojure.lang Murmur3]))
 
 ;;; Implementation
 ;;;
@@ -21,8 +21,8 @@
     java.lang.String     (Murmur3/hashUnencodedChars x)
     clojure.lang.Keyword (+ (Murmur3/hashUnencodedChars (str x)) 0x9e3779b9)))
 
-(def initial-size 50)
-(def load-factor 0.7)
+(def initial-size     50)
+(def load-factor      0.7)
 (def hashing-function murmur3)
 
 (declare insert-multiple list-values)
@@ -53,11 +53,11 @@
 
 ;; Lots of tedious checks are omitted.
 (defn insert [hashtable [key value]]
-  (let [hashtable (if (nil? hashtable) (create) hashtable)
-        real-size (count (list-values hashtable))
-        resize? (> (/ (inc real-size) (:size hashtable)) (:load-factor hashtable))
-        hash (:hashing-function hashtable)
-        index (mod (hash key) (:size hashtable))
+  (let [hashtable   (if (nil? hashtable) (create) hashtable)
+        real-size   (count (list-values hashtable))
+        resize?     (> (/ (inc real-size) (:size hashtable)) (:load-factor hashtable))
+        hash        (:hashing-function hashtable)
+        index       (mod (hash key) (:size hashtable))
         array-value (aget (:array hashtable) index)]
     (aset (:array hashtable) index (conj array-value [key value]))
     (if resize?
@@ -73,10 +73,10 @@
 
 (defn hfind [hashtable key]
   (let [index (mod ((:hashing-function hashtable) key) (inc (:size hashtable)))
-        cell (aget (:array hashtable) index)]
+        cell  (aget (:array hashtable) index)]
     (loop [f (first cell)
            r (rest cell)]
       (cond
         (= key (first f)) (second f)
-        (empty? r) nil
-        :else (recur (first r) (rest r))))))
+        (empty? r)        nil
+        :else             (recur (first r) (rest r))))))
