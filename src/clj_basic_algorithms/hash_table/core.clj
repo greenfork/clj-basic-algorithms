@@ -29,7 +29,9 @@
 
 (defrecord HashTable [array size load-factor hashing-function])
 
-(defn initialize-array [array]
+(defn initialize-array
+  "Fill `array` with empty lists."
+  [array]
   (let [limit (dec (count array))]
     (loop [index 0]
       (aset array index ())
@@ -38,6 +40,7 @@
         (recur (inc index))))))
 
 (defn create
+  "Create new `HashTable` record."
   ([] (create initial-size load-factor hashing-function))
   ([initial-size load-factor hashing-function]
    (HashTable. (initialize-array (make-array Object initial-size))
@@ -45,14 +48,18 @@
                load-factor
                hashing-function)))
 
-(defn resize [^HashTable hashtable ^Integer new-size]
+(defn resize
+  "Move `hashtable`s key-value pairs to a larger new `HashTable`."
+  [^HashTable hashtable ^Integer new-size]
   (insert-multiple (create new-size
                            (:load-factor hashtable)
                            (:hashing-function hashtable))
                    (list-values hashtable)))
 
 ;; Lots of tedious checks are omitted.
-(defn insert [hashtable [key value]]
+(defn insert
+  "Insert new `value` with specified `key` into `hashtable`."
+  [hashtable [key value]]
   (let [hashtable   (if (nil? hashtable) (create) hashtable)
         real-size   (count (list-values hashtable))
         resize?     (> (/ (inc real-size) (:size hashtable)) (:load-factor hashtable))
@@ -64,14 +71,20 @@
       (resize hashtable (* 2 (:size hashtable)))
       hashtable)))
 
-(defn insert-multiple [hashtable key-values]
+(defn insert-multiple
+  "Insert into `hashtable` a collection of key-value pairs."
+  [hashtable key-values]
   ;; OPTIMIZE: `insert` does not need to compute `resize?` every time
   (reduce insert hashtable key-values))
 
-(defn list-values [hashtable]
+(defn list-values
+  "List all keys and values as a single collection."
+  [hashtable]
   (mapcat identity (remove empty? (into [] (:array hashtable)))))
 
-(defn hfind [hashtable key]
+(defn hfind
+  "Find value in a `hashtable` by `key`."
+  [hashtable key]
   (let [index (mod ((:hashing-function hashtable) key) (inc (:size hashtable)))
         cell  (aget (:array hashtable) index)]
     (loop [f (first cell)
