@@ -4,8 +4,7 @@ This is a collection of data structures and algorithms that are essential and
 not so essential in the modern era. You are free to use any of these without
 any obligations.
 
-Why reinvent the wheel, Clojure is built on some of these structures?! Haha, I
-don't know.
+Why reinvent the wheel, Clojure is built on some of these structures?! Hehe, it is a good question.
 
 # Available structures and algorithms
 
