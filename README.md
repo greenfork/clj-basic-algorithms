@@ -16,6 +16,9 @@ don't know.
 - [Index hashing][4] -- a collection of non-cryptographic algorithms used
   mainly for indexing. Includes Bernstein, FNV, One at a Time, Zobrist,
   Murmur3.
+- [Hash Table][5] -- an array-like structure allowing for arbitrary indexes
+  instead of just integers such as strings, keywords etc. Occupies more space
+  but provides nearly O(1) lookup time.
 - [Red-Black tree][3] -- self-balancing binary search tree, O(log n)
   operations, on average faster than AVL tree on modifications but slower on
   lookup.
@@ -24,6 +27,7 @@ don't know.
 [2]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/binary_search_tree
 [3]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/redblack_tree
 [4]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/index_hashing
+[5]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/hash_table
 
 # Communication
 
