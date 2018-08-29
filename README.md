@@ -18,6 +18,8 @@ Why reinvent the wheel, Clojure is built on some of these structures?! Hehe, it 
 - [Hash Table][5] -- an array-like structure allowing for arbitrary indexes
   instead of just integers such as strings, keywords etc. Occupies more space
   but provides nearly O(1) lookup time.
+- [Number generation][7] -- methods for various number generation algorithms.
+  Includes Box-Muller-Marsaglia polar method.
 - [Red-Black tree][3] -- self-balancing binary search tree, O(log n)
   operations, on average faster than AVL tree on modifications but slower on
   lookup.
@@ -29,6 +31,7 @@ Why reinvent the wheel, Clojure is built on some of these structures?! Hehe, it 
 [4]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/index_hashing
 [5]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/hash_table
 [6]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/sorting
+[7]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/number_generation
 
 # Communication
 
