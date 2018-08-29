@@ -21,12 +21,14 @@ Why reinvent the wheel, Clojure is built on some of these structures?! Hehe, it 
 - [Red-Black tree][3] -- self-balancing binary search tree, O(log n)
   operations, on average faster than AVL tree on modifications but slower on
   lookup.
+- [Sorting][6] -- a collection of sorting algorithms. Includes bubble sort.
 
 [1]: https://github.com/greenfork/clj-basic-algorithms/blob/master/src/clj_basic_algorithms/AVL_tree
 [2]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/binary_search_tree
 [3]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/redblack_tree
 [4]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/index_hashing
 [5]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/hash_table
+[6]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/sorting
 
 # Communication
 
