@@ -1,5 +1,6 @@
 (ns clj-basic-algorithms.symbolic-regression.core
-  (:require [clojure.zip :as zip])
+  (:require [clojure.zip :as zip]
+            [clojure.set :as set])
   (:import [clojure.lang PersistentList]))
 
 ;;; Data to model
@@ -12,13 +13,19 @@
 
 (def terminal-set #{'x 'R})
 
-(def function-set #{'unchecked-add-int
-                    'unchecked-subtract-int
-                    'unchecked-multiply-int
-                    '%
-                    ;; FIXME: remove these after testing is complete
-                    '+
-                    '*})
+(def function-arity {'+ 2, '- 2, '* 2, '% 2})
+(def function-set (into #{} (keys function-arity)))
+
+;; (def function-set #{['unchecked-add 2]
+;;                     ['unchecked-subtract 2]
+;;                     ['unchecked-multiply 2]
+;;                     ['% 2]})
+
+(def symbol-set (set/union terminal-set function-set))
+
+(def terminal-vec (into [] terminal-set))
+(def function-vec (into [] function-set))
+(def symbol-vec (into [] symbol-set))
 
 (defn fitness-function
   "Sum of absolute errors. Lower value corresponds to better candidate."
@@ -35,7 +42,7 @@
 
 ;;; Utility functions
 
-(defn % [^Integer x ^Integer y]
+(defn % [^Number x ^Number y]
   (if (zero? y)
     0
     (unchecked-divide-int x y)))
@@ -44,18 +51,52 @@
 
 (defn treesize [tree] (count (flatten tree)))
 
-(defn all-locations [tree]
-  (take (treesize tree)
-        (iterate #(let [subtree (zip/next %)]
-                    (if (function-set (zip/node subtree))
-                      (zip/next subtree)
-                      subtree))
-                 (zip/seq-zip tree))))
+(defn locations [tree]
+  (iterate #(let [subtree (zip/next %)]
+              (if (function-set (zip/node subtree))
+                (zip/next subtree)
+                subtree))
+           (zip/seq-zip tree)))
+
+(defn all-locations [tree] (take (treesize tree) (locations tree)))
 
 (defn random-location [tree]
   (if (seq? tree)
-    (rand-nth (all-locations tree))
+    (nth (locations tree) (rand-int (treesize tree)))
     tree))
+
+;;; Random tree generation
+
+(defn full-tree
+  "Generate a random tree fully filled up to `max-depth`."
+  [max-depth]
+  (if (== max-depth 1)
+    (rand-nth terminal-vec)
+    (let [fun   (rand-nth function-vec)
+          arity (function-arity fun)]
+      (cons fun (repeatedly arity #(full-tree (dec max-depth)))))))
+
+(defn grow-tree
+  "Generate a random tree which can be shorter than its `max-depth`."
+  [max-depth]
+  (if (== max-depth 1)
+    (rand-nth terminal-vec)
+    (let [sym   (rand-nth symbol-vec)
+          arity (function-arity sym)]
+      (if (nil? arity)
+        ;; `sym` is a terminal
+        sym
+        ;; `sym` is a function
+        (cons sym (repeatedly arity #(grow-tree (dec max-depth))))))))
+
+(defn ramped-half-and-half
+  "Generate a random tree using the `grow-tree` and `full-tree` combination.
+  The depth is chosen randomly between `min-depth-limit` and `max-depth-limit`."
+  [min-depth-limit max-depth-limit]
+  (let [max-depth (rand-nth (range min-depth-limit (inc max-depth-limit)))]
+    (if (> (rand) 0.5)
+      (full-tree max-depth)
+      (grow-tree max-depth))))
 
 ;;; Evolving functions
 
@@ -69,3 +110,5 @@
 
 (def test-tree1 '(+ (* x (+ y z)) w))
 (def test-tree2 '(+ (* x (+ x x)) x))
+;; (def test-tree1 '(unchecked-add (unchecked-multiply x (unchecked-add y z)) w))
+;; (def test-tree2 '(unchecked-add (unchecked-multiply x (unchecked-add x x)) x))
