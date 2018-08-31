@@ -25,6 +25,9 @@ Why reinvent the wheel, Clojure is built on some of these structures?! Hehe, it 
   operations, on average faster than AVL tree on modifications but slower on
   lookup.
 - [Sorting][6] -- a collection of sorting algorithms. Includes bubble sort.
+- [Symbolic regression (using genetic programming)][8] -- a basic genetic
+  programming algorithm aimed at finding the closest function (curve) that
+  corresponds to the given set of data.
 
 [1]: https://github.com/greenfork/clj-basic-algorithms/blob/master/src/clj_basic_algorithms/AVL_tree
 [2]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/binary_search_tree
@@ -33,6 +36,7 @@ Why reinvent the wheel, Clojure is built on some of these structures?! Hehe, it 
 [5]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/hash_table
 [6]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/sorting
 [7]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/number_generation
+[8]: https://github.com/greenfork/clj-basic-algorithms/tree/master/src/clj_basic_algorithms/symbolic_regression
 
 # Communication
 
