@@ -98,7 +98,37 @@
       (full-tree max-depth)
       (grow-tree max-depth))))
 
-;;; Evolving functions
+;; https://stackoverflow.com/a/52127548/8598954
+(defn- ptc2
+  "Generate a random tree with the `target-size`.
+  Note: `target-size` is the number of nodes, not the same as its depth."
+  [target-size]
+  (if (== 1 target-size)
+    (rand-nth terminal-vec)
+    (let [f (rand-nth function-vec)
+          arity (function-arity f)]
+      ;; Generate a tree like `[+ nil nil]` and iterate upon it
+      (loop [tree (into [f] (repeat arity nil))
+             ;; `paths-to-nil` will be something like ([1] [2]), being a list of
+             ;; paths to the nil elements in the `tree`
+             paths-to-nil (for [i (range arity)] [(inc i)])
+             size 1]
+        (if (< (+ size (count paths-to-nil)) target-size)
+          ;; Replace one of the nils in the `tree` with a new node
+          (let [path (rand-nth paths-to-nil)
+                f (rand-nth function-vec)
+                arity (function-arity f)]
+            (recur (assoc-in tree path (into [f] (repeat arity nil)))
+                   (into (remove #{path} paths-to-nil)
+                         (for [i (range arity)] (conj path (inc i))))
+                   (inc size)))
+          ;; In the end, fill all remaining slots with terminals
+          (reduce (fn [tree path] (assoc-in tree path (rand-nth terminal-vec)))
+                  tree paths-to-nil))))))
+
+(defn- sequentiate [v] (map #(if (sequential? %) (sequentiate %) %) (seq v)))
+
+(defn ptc2-tree [target-size] (sequentiate (ptc2 target-size)))
 
 ;;; Crossover
 
