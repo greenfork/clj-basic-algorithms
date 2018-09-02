@@ -51,7 +51,7 @@
 
 (defn treesize [tree] (count (flatten tree)))
 
-(defn locations [tree]
+(defn- locations [tree]
   (iterate #(let [subtree (zip/next %)]
               (if (function-set (zip/node subtree))
                 (zip/next subtree)
@@ -72,9 +72,9 @@
   [max-depth]
   (if (== max-depth 1)
     (rand-nth terminal-vec)
-    (let [fun   (rand-nth function-vec)
-          arity (function-arity fun)]
-      (cons fun (repeatedly arity #(full-tree (dec max-depth)))))))
+    (let [f     (rand-nth function-vec)
+          arity (function-arity f)]
+      (cons f (repeatedly arity #(full-tree (dec max-depth)))))))
 
 (defn grow-tree
   "Generate a random tree which can be shorter than its `max-depth`."
