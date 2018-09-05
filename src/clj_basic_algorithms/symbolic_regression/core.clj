@@ -126,7 +126,7 @@
           (reduce (fn [tree path] (assoc-in tree path (rand-nth terminal-vec)))
                   tree paths-to-nil))))))
 
-(defn- sequentiate [v] (map #(if (sequential? %) (sequentiate %) %) (seq v)))
+(defn- sequentiate [v] (map #(if (seqable? %) (sequentiate %) %) (seq v)))
 
 (defn ptc2-tree [target-size] (sequentiate (ptc2 target-size)))
 
@@ -138,7 +138,26 @@
     [(zip/root (zip/replace loc1 (zip/node loc2)))
      (zip/root (zip/replace loc2 (zip/node loc1)))]))
 
+(defn biased-crossover
+  "Pick non-terminals 90% of the time and terminals 10% of the time."
+  [tree1 tree2]
+  (let [f1? (> (rand) 0.1)
+        f2? (> (rand) 0.1)
+        loc1 (loop [loc (random-location tree1)]
+               (cond
+                 (and f1? (seqable? (zip/node loc))) loc
+                 (and (not f1?) (terminal-set (zip/node loc))) loc
+                 :else (recur (random-location tree1))))
+        loc2 (loop [loc (random-location tree2)]
+               (cond
+                 (and f2? (seqable? (zip/node loc))) loc
+                 (and (not f2?) (terminal-set (zip/node loc))) loc
+                 :else (recur (random-location tree2))))]
+    [(zip/root (zip/replace loc1 (zip/node loc2)))
+     (zip/root (zip/replace loc2 (zip/node loc1)))]))
+
+;;; Testing
+
 (def test-tree1 '(+ (* x (+ y z)) w))
 (def test-tree2 '(+ (* x (+ x x)) x))
-;; (def test-tree1 '(unchecked-add (unchecked-multiply x (unchecked-add y z)) w))
-;; (def test-tree2 '(unchecked-add (unchecked-multiply x (unchecked-add x x)) x))
+(def test-tree3 '(- (* x x) (+ x (* (% R x) R))))
