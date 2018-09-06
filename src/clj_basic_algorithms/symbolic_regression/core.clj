@@ -49,7 +49,7 @@
 
 (defn R [] (- (rand 20) 10))
 
-(defn treesize [tree] (count (flatten tree)))
+(defn treesize [tree] (if (seq? tree)(count (flatten tree)) 1))
 
 (defn- locations [tree]
   (iterate #(let [subtree (zip/next %)]
@@ -155,6 +155,70 @@
                  :else (recur (random-location tree2))))]
     [(zip/root (zip/replace loc1 (zip/node loc2)))
      (zip/root (zip/replace loc2 (zip/node loc1)))]))
+
+(defn- similar-nodes
+  "Return the number of similar nodes in 2 trees.
+  The counting stops for the subtree as soon as 1 element does not match."
+  [tree1 tree2]
+  (let [tree1 (zip/seq-zip tree1)
+        tree2 (zip/seq-zip tree2)]
+    (if (and (zip/branch? tree1) (zip/branch? tree2))
+      (let [f1 (zip/down tree1)
+            f2 (zip/down tree2)]
+        (if (= (zip/node f1) (zip/node f2))
+          (reduce (fn [acc [st1 st2]] (+ acc (similar-nodes st1 st2)))
+                  1
+                  (map vector (zip/rights f1) (zip/rights f2)))
+          0))
+      ;; if one of the trees is a terminal
+      (if (= tree1 tree2)
+        1
+        0))))
+
+(defn homologous-crossover
+  "Crossover trees at similar common points.
+
+  `size-coeff` -- how similar should be the sizes of the trees; more is more
+                  similar; `size-coeff` > 0; 1 by default.
+
+  `homology-coeff` -- how similar should be the nodes in the trees; more is
+                      less similar; `homology-coeff` > 0; 1 by default.
+
+  `tries` -- number of tries to select the right subtrees; 0 is equal to
+             infinity (very philosophical). 50 by default.
+
+  The algorithm is based on
+
+  R. M. MacCallum. Introducing a perl genetic programming system: and can
+  meta-evolution solve the bloat problem? In C. Ryan, et al., editors, Genetic
+  Programming, Proceedings of EuroGP’2003, volume 2610 of LNCS, pages
+  364–373, Essex, 14-16 April 2003. Springer-Verlag. ISBN 3-540-00971-X."
+  ([tree1 tree2] (homologous-crossover tree1 tree2 1 1 50))
+  ([tree1 tree2 size-coeff homology-coeff tries]
+   (let [[loc1 loc2] (loop [n (if (zero? tries) Integer/MAX_VALUE tries)]
+                       (let [loc1 (random-location tree1)
+                             loc2 (random-location tree2)
+                             t1 (zip/node loc1)
+                             t2 (zip/node loc2)
+                             size1 (treesize t1)
+                             size2 (treesize t2)
+                             size-mult     (/ (Math/abs (- size1 size2))
+                                              (max size1 size2))
+                             homology-mult (/ (similar-nodes t1 t2)
+                                              (min size1 size2))
+                             probability (* (- 1 (Math/pow size-mult size-coeff))
+                                            (Math/pow homology-mult homology-coeff))]
+                         (cond
+                           (zero? n) [:no-crossover :no-crossover]
+                           ;; Same node values occur more often, this check
+                           ;; should alleviate this disadvantage.
+                           (= t1 t2) (recur (dec n))
+                           (> probability (rand)) [loc1 loc2]
+                           :else (recur (dec n)))))]
+     (if (= :no-crossover loc1)
+       [tree1 tree2]
+       [(zip/root (zip/replace loc1 (zip/node loc2)))
+       (zip/root (zip/replace loc2 (zip/node loc1)))]))))
 
 ;;; Testing
 
