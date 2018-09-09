@@ -179,13 +179,15 @@
   "Crossover trees at similar common points.
 
   `size-coeff` -- how similar should be the sizes of the trees; more is more
-                  similar; `size-coeff` > 0; 1 by default.
+  similar; `size-coeff` > 0; 1 by default.
 
   `homology-coeff` -- how similar should be the nodes in the trees; more is
-                      less similar; `homology-coeff` > 0; 1 by default.
+  less similar; `homology-coeff` > 0; 1 by default.
 
-  `tries` -- number of tries to select the right subtrees; 0 is equal to
-             infinity (very philosophical). 50 by default.
+  `tries` -- number of tries to select the right subtrees; after `tries`
+  number of failures to successfully select the trees, the algorithm falls
+  back on random subtree selection; 0 is equal to infinity (very
+  philosophical); 50 by default.
 
   The algorithm is based on
 
@@ -209,16 +211,14 @@
                              probability (* (- 1 (Math/pow size-mult size-coeff))
                                             (Math/pow homology-mult homology-coeff))]
                          (cond
-                           (zero? n) [:no-crossover :no-crossover]
+                           (zero? n) [loc1 loc2]
                            ;; Same node values occur more often, this check
                            ;; should alleviate this disadvantage.
                            (= t1 t2) (recur (dec n))
                            (> probability (rand)) [loc1 loc2]
                            :else (recur (dec n)))))]
-     (if (= :no-crossover loc1)
-       [tree1 tree2]
-       [(zip/root (zip/replace loc1 (zip/node loc2)))
-       (zip/root (zip/replace loc2 (zip/node loc1)))]))))
+     [(zip/root (zip/replace loc1 (zip/node loc2)))
+      (zip/root (zip/replace loc2 (zip/node loc1)))])))
 
 ;;; Testing
 
