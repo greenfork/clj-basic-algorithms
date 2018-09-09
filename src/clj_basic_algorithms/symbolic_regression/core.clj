@@ -34,7 +34,7 @@
     (reduce (fn [acc [in out]] (+ acc (Math/abs (- (fun in) out)))) 0 dataset)))
 
 (def crossover-rate    90)
-(def reproduction-rate 8)
+(def replication-rate  8)
 (def mutation-rate     2)
 
 ;; When to terminate the evolution
