@@ -61,7 +61,11 @@
 
 (defn all-locations [tree] (take (treesize tree) (locations tree)))
 
-(defn random-location [tree]
+(defn random-location
+  "Choose a node in the `tree` at random.
+
+  Note: there is roughly 50% of functions and terminals in the tree."
+  [tree]
   (if (seq? tree)
     (nth (locations tree) (rand-int (treesize tree)))
     tree))
