@@ -1,7 +1,10 @@
 (ns clj-basic-algorithms.symbolic-regression.core
   (:require [clojure.zip :as zip]
             [clojure.set :as set]
-            [clojure.test :refer :all])
+            [clojure.test :refer :all]
+            [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
+            [clojure.spec.test.alpha :as stest])
   (:import [clojure.lang PersistentList]))
 
 ;;; Data to model
@@ -252,6 +255,39 @@
     [(zip/root (zip/replace loc1 (zip/node loc2)))
      (zip/root (zip/replace loc2 (zip/node loc1)))]))
 
+;;; Specs
+
+(s/def ::function function-set)
+(s/def ::terminal terminal-set)
+(def min-depth 2)
+(def max-depth 10)
+(s/def ::max-depth (s/int-in min-depth max-depth))
+(s/def ::max-size  (s/int-in (int (Math/pow 2 min-depth)) (int (Math/pow 2 max-depth))))
+(def gen-tree (fn [] (gen/fmap #(ramped-half-and-half 1 %)
+                               (s/gen ::max-depth))))
+(s/def ::tree (s/with-gen (s/or :tree (s/cat :function ::function
+                                             :args     (s/* (s/or :branch ::tree
+                                                                  :leaf   ::terminal)))
+                                :element ::terminal)
+                gen-tree))
+
+(s/fdef full-tree
+  :args (s/cat :max-depth ::max-depth)
+  :ret  ::tree)
+
+(s/fdef grow-tree
+  :args (s/cat :max-depth ::max-depth)
+  :ret  ::tree)
+
+(s/fdef ramped-half-and-half
+  :args (s/and (s/cat :min-depth ::max-depth :max-depth ::max-depth)
+               #(< (:min-depth %) (:max-depth %)))
+  :ret  ::tree)
+
+(s/fdef ptc2-tree
+  :args (s/cat :target-size ::max-size)
+  :ret  ::tree)
+
 ;;; Testing
 
 (def test-tree1 '(+ (* x (+ y z)) w))
@@ -275,3 +311,16 @@
                                (inc function-counter)
                                function-counter))))]
     (is (< (- probability epsilon) (/ functions loops) (+ probability epsilon)))))
+
+(defn test-it [sym]
+  ((comp not #(contains? % :failure) stest/abbrev-result first stest/check) sym))
+
+(deftest specs
+  (testing "full-tree"
+    (is (test-it `full-tree)))
+  (testing "grow-tree"
+    (is (test-it `grow-tree)))
+  (testing "ramped-half-and-half"
+    (is (test-it `ramped-half-and-half)))
+  (testing "ptc2-tree"
+    (is (test-it `ptc2-tree))))
