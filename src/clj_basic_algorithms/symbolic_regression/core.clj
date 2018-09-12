@@ -120,6 +120,9 @@
 ;; https://stackoverflow.com/a/52127548/8598954
 (defn- ptc2
   "Generate a random tree with the `target-size`.
+  The actual size will be increased by some small value if it is impossible to
+  construct the tree with the exact specified `target-size`.
+
   Note: `target-size` is the number of nodes, not the same as its depth."
   [target-size]
   (if (== 1 target-size)
@@ -147,7 +150,8 @@
 
 (defn- sequentiate [v] (map #(if (seqable? %) (sequentiate %) %) (seq v)))
 
-(defn ptc2-tree [target-size] (sequentiate (ptc2 target-size)))
+(defn ptc2-tree [target-size]
+  (sequentiate (ptc2 target-size)))
 
 ;;; Crossover
 
