@@ -1,6 +1,7 @@
 (ns clj-basic-algorithms.symbolic-regression.core
   (:require [clojure.zip :as zip]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            [clojure.test :refer :all])
   (:import [clojure.lang PersistentList]))
 
 ;;; Data to model
@@ -64,6 +65,20 @@
   (if (seq? tree)
     (nth (locations tree) (rand-int (treesize tree)))
     tree))
+
+(defn biased-random-location
+  "Choose nodes `p` % of the time and leaves 1 - `p` % of the time."
+  ([tree] (biased-random-location tree 0.9))
+  ([tree p]
+   {:pre [(< 0 p 1)]}
+   (loop [loc (random-location tree)]
+     (if (seq? (zip/node loc))
+       (if (> p (rand))
+         loc
+         (recur (random-location tree)))
+       (if (< p (rand))
+         loc
+         (recur (random-location tree)))))))
 
 ;;; Random tree generation
 
@@ -239,3 +254,21 @@
 (def test-tree1 '(+ (* x (+ y z)) w))
 (def test-tree2 '(+ (* x (+ x x)) x))
 (def test-tree3 '(- (* x x) (+ x (* (% R x) R))))
+
+(def test-tree50 '(% (% (% (+ R (% R x)) R) (% (% R x) (+ x (- R x))))
+                     (- (- (- (* (+ x x) (* x x)) (% (% R R) (- (+ R x) x)))
+                           (* x (% (* R (% x x)) R))) (+ (- R x) R))))
+
+(deftest biased-random-location-test
+  (let [probability 0.9
+        epsilon 0.01
+        loops 10000
+        functions (loop [n loops function-counter 0]
+                    (if (zero? n)
+                      function-counter
+                      (recur (dec n)
+                             (if (seq? (zip/node (biased-random-location test-tree50
+                                                                         probability)))
+                               (inc function-counter)
+                               function-counter))))]
+    (is (< (- probability epsilon) (/ functions loops) (+ probability epsilon)))))
