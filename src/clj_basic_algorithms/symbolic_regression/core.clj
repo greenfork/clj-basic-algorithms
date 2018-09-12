@@ -220,6 +220,20 @@
      [(zip/root (zip/replace loc1 (zip/node loc2)))
       (zip/root (zip/replace loc2 (zip/node loc1)))])))
 
+(defn size-fair-crossover
+  "Crossover saving the size within close boundaries between 2 subtrees."
+  [tree1 tree2]
+  (let [loc1 (random-location tree1)
+        size1 (treesize (zip/node loc1))
+        bound1 (* (/ 2 3) size1)
+        bound2 (* (/ 4 3) size1)
+        loc2 (loop [loc (random-location tree2)]
+               (if (<= bound1 (treesize (zip/node loc)) bound2)
+                 loc
+                 (recur (random-location tree2))))]
+    [(zip/root (zip/replace loc1 (zip/node loc2)))
+     (zip/root (zip/replace loc2 (zip/node loc1)))]))
+
 ;;; Testing
 
 (def test-tree1 '(+ (* x (+ y z)) w))
