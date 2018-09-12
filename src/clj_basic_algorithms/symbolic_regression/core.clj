@@ -14,7 +14,7 @@
 
 (def terminal-set #{'x 'R})
 
-(def function-arity {'+ 2, '- 2, '* 2, '% 2})
+(def function-arity {'+ 2, '- 2, '* 2, 'pd 2})
 (def function-set (into #{} (keys function-arity)))
 
 ;; (def function-set #{['unchecked-add 2]
@@ -43,7 +43,9 @@
 
 ;;; Utility functions
 
-(defn % [^Number x ^Number y]
+(defn pd
+  "Divide `x` over `y` and in case `y` is zero return 0."
+  [^Number x ^Number y]
   (if (zero? y)
     0
     (unchecked-divide-int x y)))
@@ -254,11 +256,11 @@
 
 (def test-tree1 '(+ (* x (+ y z)) w))
 (def test-tree2 '(+ (* x (+ x x)) x))
-(def test-tree3 '(- (* x x) (+ x (* (% R x) R))))
+(def test-tree3 '(- (* x x) (+ x (* (pd R x) R))))
 
-(def test-tree50 '(% (% (% (+ R (% R x)) R) (% (% R x) (+ x (- R x))))
-                     (- (- (- (* (+ x x) (* x x)) (% (% R R) (- (+ R x) x)))
-                           (* x (% (* R (% x x)) R))) (+ (- R x) R))))
+(def test-tree50 '(pd (pd (pd (+ R (pd R x)) R) (pd (pd R x) (+ x (- R x))))
+                     (- (- (- (* (+ x x) (* x x)) (pd (pd R R) (- (+ R x) x)))
+                           (* x (pd (* R (pd x x)) R))) (+ (- R x) R))))
 
 (deftest biased-random-location-test
   (let [probability 0.9
