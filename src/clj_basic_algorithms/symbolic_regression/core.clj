@@ -105,8 +105,8 @@
   "Generate a random tree fully filled up to `max-depth`."
   [max-depth]
   (if (== max-depth 1)
-    (rand-nth terminal-vec)
-    (let [f     (rand-nth function-vec)
+    (random-terminal)
+    (let [f     (random-function)
           arity (function-arity f)]
       (cons f (repeatedly arity #(full-tree (dec max-depth)))))))
 
@@ -114,8 +114,8 @@
   "Generate a random tree which can be shorter than its `max-depth`."
   [max-depth]
   (if (== max-depth 1)
-    (rand-nth terminal-vec)
-    (let [sym   (rand-nth symbol-vec)
+    (random-terminal)
+    (let [sym   (random-symbol)
           arity (function-arity sym)]
       (if (nil? arity)
         ;; `sym` is a terminal
@@ -141,8 +141,8 @@
   Note: `target-size` is the number of nodes, not the same as its depth."
   [target-size]
   (if (== 1 target-size)
-    (rand-nth terminal-vec)
-    (let [f (rand-nth function-vec)
+    (random-terminal)
+    (let [f (random-function)
           arity (function-arity f)]
       ;; Generate a tree like `[+ nil nil]` and iterate upon it
       (loop [tree (into [f] (repeat arity nil))
@@ -153,14 +153,14 @@
         (if (< (+ size (count paths-to-nil)) target-size)
           ;; Replace one of the nils in the `tree` with a new node
           (let [path (rand-nth paths-to-nil)
-                f (rand-nth function-vec)
+                f (random-function)
                 arity (function-arity f)]
             (recur (assoc-in tree path (into [f] (repeat arity nil)))
                    (into (remove #{path} paths-to-nil)
                          (for [i (range arity)] (conj path (inc i))))
                    (inc size)))
           ;; In the end, fill all remaining slots with terminals
-          (reduce (fn [tree path] (assoc-in tree path (rand-nth terminal-vec)))
+          (reduce (fn [tree path] (assoc-in tree path (random-terminal)))
                   tree paths-to-nil))))))
 
 (defn- sequentiate [v] (map #(if (seqable? %) (sequentiate %) %) (seq v)))
@@ -283,7 +283,7 @@
          max-depth (inc (rand-int (dec (* 1.15 (treesize (zip/node loc))))))
          subtree (ramped-half-and-half 1 max-depth)]
      (zip/root (zip/replace loc subtree)))
-   (rand-nth terminal-vec)))
+   (random-terminal)))
 
 ;;; Specs
 
