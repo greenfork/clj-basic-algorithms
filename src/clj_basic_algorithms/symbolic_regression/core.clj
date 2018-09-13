@@ -127,7 +127,8 @@
   "Generate a random tree using the `grow-tree` and `full-tree` combination.
   The depth is chosen randomly between `min-depth-limit` and `max-depth-limit`."
   [min-depth-limit max-depth-limit]
-  (let [max-depth (rand-nth (range min-depth-limit (inc max-depth-limit)))]
+  (let [max-depth (int (+ min-depth-limit
+                          (rand-int (- max-depth-limit min-depth-limit))))]
     (if (> (rand) 0.5)
       (full-tree max-depth)
       (grow-tree max-depth))))
@@ -284,6 +285,23 @@
          subtree (ramped-half-and-half 1 max-depth)]
      (zip/root (zip/replace loc subtree)))
    (random-terminal)))
+
+(defn size-fair-subtree-mutation
+  "Replace a randomly selected subtree with a similar-sized random subtree.
+  The final size is in the range [l/2, 3l/2] where l is the size of the
+  subtree."
+  [tree]
+  (if (seq? tree)
+    (let [loc (random-location tree)
+          loc-size (treesize (zip/node loc))
+          min-depth (/ loc-size 2)
+          max-depth (/ (* 3 loc-size) 2)
+          subtree (if (not= 1 loc-size)
+                    (ramped-half-and-half min-depth max-depth)
+                    (ramped-half-and-half 1 1))]
+      (println (zip/node loc))
+      (zip/root (zip/replace loc subtree)))
+    (random-terminal)))
 
 ;;; Specs
 
