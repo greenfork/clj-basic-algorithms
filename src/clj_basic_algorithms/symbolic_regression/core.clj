@@ -46,6 +46,16 @@
 
 ;;; Utility functions
 
+(defn random-symbol [] (rand-nth symbol-vec))
+(defn random-terminal [] (rand-nth terminal-vec))
+(defn random-function [] (rand-nth function-vec))
+
+(defn random-function-same-arity [f]
+  (rand-nth (mapv first
+                  (filter #(and (#{(function-arity f)} (second %))
+                                (not= f (first %)))
+                          function-arity))))
+
 (defn pd
   "Divide `x` over `y` and in case `y` is zero return 0."
   [^Number x ^Number y]
