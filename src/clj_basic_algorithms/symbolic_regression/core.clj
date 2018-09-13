@@ -255,6 +255,26 @@
     [(zip/root (zip/replace loc1 (zip/node loc2)))
      (zip/root (zip/replace loc2 (zip/node loc1)))]))
 
+;;; Mutation
+
+(defn subtree-mutation
+  "Replace a randomly selected subtree with another random subtree.
+
+  The max depth should be no more than 15% larger than the initial tree
+  according to:
+
+  K. E. Kinnear, Jr. Evolving a sort: Lessons in genetic programming. In
+  Proceedings of the 1993 International Conference on Neural Networks, volume
+  2, pages 881–888, San Francisco, USA, 28 March-1 April 1993. IEEE Press.
+  ISBN 0-7803-0999-5."
+  [tree]
+  (if (seq? tree)
+   (let [loc (random-location tree)
+         max-depth (inc (rand-int (dec (* 1.15 (treesize (zip/node loc))))))
+         subtree (ramped-half-and-half 1 max-depth)]
+     (zip/root (zip/replace loc subtree)))
+   (rand-nth terminal-vec)))
+
 ;;; Specs
 
 (s/def ::function function-set)
@@ -271,6 +291,8 @@
                                 :element ::terminal)
                 gen-tree))
 
+;; Random tree generation specs
+
 (s/fdef full-tree
   :args (s/cat :max-depth ::max-depth)
   :ret  ::tree)
@@ -286,6 +308,12 @@
 
 (s/fdef ptc2-tree
   :args (s/cat :target-size ::max-size)
+  :ret  ::tree)
+
+;; Mutation specs
+
+(s/fdef subtree-mutation
+  :args (s/cat :tree ::tree)
   :ret  ::tree)
 
 ;;; Testing
