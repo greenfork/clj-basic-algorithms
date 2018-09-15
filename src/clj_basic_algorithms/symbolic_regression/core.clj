@@ -305,7 +305,6 @@
           subtree (if (not= 1 loc-size)
                     (ramped-half-and-half min-depth max-depth)
                     (ramped-half-and-half 1 1))]
-      (println (zip/node loc))
       (zip/root (zip/replace loc subtree)))
     (random-terminal)))
 
@@ -325,7 +324,7 @@
 (s/def ::function function-set)
 (s/def ::terminal terminal-set)
 (def min-depth 2)
-(def max-depth 10)
+(def max-depth 8)
 (s/def ::max-depth (s/int-in min-depth max-depth))
 (s/def ::max-size  (s/int-in (int (Math/pow 2 min-depth)) (int (Math/pow 2 max-depth))))
 (def gen-tree (fn [] (gen/fmap #(ramped-half-and-half 1 %)
@@ -358,6 +357,14 @@
 ;; Mutation specs
 
 (s/fdef subtree-mutation
+  :args (s/cat :tree ::tree)
+  :ret  ::tree)
+
+(s/fdef size-fair-subtree-mutation
+  :args (s/cat :tree ::tree)
+  :ret  ::tree)
+
+(s/fdef point-mutation
   :args (s/cat :tree ::tree)
   :ret  ::tree)
 
@@ -396,4 +403,10 @@
   (testing "ramped-half-and-half"
     (is (test-it `ramped-half-and-half)))
   (testing "ptc2-tree"
-    (is (test-it `ptc2-tree))))
+    (is (test-it `ptc2-tree)))
+  (testing "subtree-mutation"
+    (is (test-it `subtree-mutation)))
+  (testing "fair-size-subtree-mutation"
+    (is (test-it `size-fair-subtree-mutation)))
+  (testing "point-mutation"
+    (is (test-it `point-mutation))))
