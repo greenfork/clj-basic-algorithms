@@ -10,8 +10,14 @@
 ;;; Data to model
 
 (defn f [x] (+ (* x x) x 1))
+(defn k [x] (+ (Math/pow x 4) (Math/pow x 3) (Math/pow x 2) x))
+(defn g [x] (+ (Math/pow x 5) (- (* 2 (Math/pow x 3))) x))
+(defn h [x] (+ (Math/pow x 6) (- (* 2 (Math/pow x 4))) (Math/pow x 2)))
 
-(def dataset (for [x (range -5 5 0.1)] [x (f x)]))
+(def dataset-f (for [x (range -5 5 0.1)] [x (f x)]))
+(def dataset-k (for [x (range -5 5 0.1)] [x (k x)]))
+(def dataset-g (for [x (range -5 5 0.1)] [x (g x)]))
+(def dataset-h (for [x (range -5 5 0.1)] [x (h x)]))
 
 ;;; Defining parameters
 
