@@ -309,6 +309,17 @@
       (zip/root (zip/replace loc subtree)))
     (random-terminal)))
 
+(defn point-mutation
+  "Replace a random node with another random node of the same type."
+  [tree]
+  (if (seq? tree)
+    (let [loc (random-location tree)]
+      (if (seq? (zip/node loc)) ;; if loc is a branch
+        (zip/root (zip/replace (zip/next loc)
+                               (random-function-same-arity (zip/node (zip/next loc)))))
+        (zip/root (zip/replace loc (random-terminal)))))
+    (random-terminal)))
+
 ;;; Specs
 
 (s/def ::function function-set)
